@@ -1,0 +1,358 @@
+  <link rel="stylesheet" href="/SiteAssets/Javascript%20Library%20CSS/jQueryUI/jquery-ui-1.8.18.custom.css">
+  <script src="/SiteAssets/Javascript%20Libraries/jQueryUI/jquery-ui-1.8.18.custom.min.js"></script>
+  <script src="/SiteAssets/Javascript%20Libraries/DateJS/date.js"></script>
+  
+  <script> 
+  $(document).ready(function(){
+  $("#extendDatePicker").focus();
+  $("#extendDatePicker").datepicker();
+  	  $('.promote').keypress(function(e){
+      if(e.keyCode==13)
+      updatePromote();
+    });
+	
+		$('.note').keypress(function(e){
+      if(e.keyCode==13)
+      updateNotes();
+    });
+  });
+</script>
+
+<style>
+	.generalDevBackground
+	{
+		background-color: #202020;
+		border: 2px solid #FFCC00;
+	}
+
+	#formP
+	{
+		text-indent: 50px;
+	}
+
+	.generalDevFormInput 
+	{
+		float: right;
+		margin-right: 150px;
+	}
+
+	.hirsAdminNote
+	{
+		border: 1px solid gray;
+		height: 200px;
+		overflow: auto;
+		padding: 2px;
+		width: 400px;
+		margin-left: 50px;
+		background-color: black;
+	}
+
+	.generalFormButtonImage
+	{
+		background-image: url('/SiteAssets/SitePages/HIRS/HIRSSimpleFix/images/Generic-Button-Animation.gif');
+		width: 100px;
+		height: 30px;
+		margin-left: 50px;
+	}
+	
+	.rememberTheBRTag
+	{
+		margin-top: 30px;
+	}
+
+	.promote
+	{
+		background-position: 0px -180px;
+	}
+
+	.promote:hover
+	{
+		background-position: 0px -210px;
+		cursor: pointer;
+	}
+	
+	.note
+	{
+		background-position: 0px 362px;
+	}
+
+	.note:hover
+	{
+		background-position: 0px 332px;
+		cursor: pointer;
+	}
+</style>
+
+<div class="generalDevBackground">
+
+	<div class="rememberTheBRTag">
+	</div>
+
+	<p id="formP">Extended Thru <input type="text" id="extendDatePicker" class="generalDevFormInput" tabindex="1"></p>
+
+	<div class="rememberTheBRTag">
+	</div>
+	
+	<p id="formP">Authorization Amount <input type="text" id="authorizationAmount" class="generalDevFormInput" tabindex="2"></p>
+	
+	<div class="rememberTheBRTag">
+	</div>
+	
+	<div class="generalFormButtonImage promote" onclick="updatePromote()" tabindex="3">
+	&nbsp;
+	</div>
+	
+	<div class="rememberTheBRTag">
+	</div>
+
+	<p id="formP">HIRS Admin Note</p>
+	<div class="hirsAdminNote" tabindex="4" contenteditable>
+	</div>
+
+	<div class="rememberTheBRTag">
+	</div>
+	
+	<div class="generalFormButtonImage note" onclick="updateNotes()" tabindex="5">
+	&nbsp;
+	</div>
+	
+	<div class="rememberTheBRTag">
+	</div>
+</div>
+
+<script type="text/javascript">
+
+	var promote = {name: ".promote", basePosition: -180, red: 60, process: 90, error: 120, complete: 150};
+	var note = {name: ".note", basePosition: 362, red: 60, process: 90, error: 120, complete: 150};
+
+	function shift(button, position)
+	{
+		var newYCoor = button.basePosition - position;
+		var posString = "0px " + newYCoor + "px";
+		$($(button.name)[0]).css("background-position", posString);
+	}
+
+	function updateNotes()
+	{
+		shift(note,note.red);
+		
+		if ($(".hirsAdminNote").text() != "")
+		{
+			
+			shift(note,note.process);
+		
+			var entry = $(".hirsAdminNote").text();
+			JSRequest.EnsureSetup();
+			var formID = JSRequest.QueryString["ID"];
+			
+			
+				$.ajax({
+	 
+				url: _spPageContextInfo.webServerRelativeUrl + "/_api/web/lists/getbytitle('HIRS General Entry')/items(" + formID + ")",
+	 
+				type: "POST",
+	 
+				contentType: "application/json;odata=verbose",
+	 
+				data: JSON.stringify({
+						__metadata: { 'type': "SP.Data.HIRS_x0020_General_x0020_EntryListItem"},
+						Customer_x0020_Notes: "<span style = 'background-color: #146406'>" + entry + "</span>"
+						}),
+	 
+				headers: {
+	 
+					"Accept": "application/json;odata=verbose",
+	 
+					"X-RequestDigest": $("#__REQUESTDIGEST").val(),
+	 
+					"X-HTTP-Method": "MERGE",
+	 
+					"If-Match": "*"
+	 
+				},
+	 
+				success: function () {
+					createNote();
+					$('.ms-formbody')[14].innerHTML = "<span style = 'background-color: #146406'>" + entry + "</span>";
+					shift(note,note.complete);
+				},
+	 
+				error: function () {
+					
+					shift(note,note.error);
+				}
+	 
+			});
+			
+			function createNote()
+			{
+					JSRequest.EnsureSetup();
+					var formID = JSRequest.QueryString["ID"];
+				
+					$.ajax({
+		 
+					url: _spPageContextInfo.webServerRelativeUrl + "/_api/web/lists/getbytitle('HIRSGeneralNotes2013')/items",
+		 
+					type: "POST",
+		 
+					contentType: "application/json;odata=verbose",
+					data: JSON.stringify({
+						__metadata:
+						{ 'type': "SP.Data.HIRSGeneralNotes2013ListItem"},
+						Note: "<span style = 'background-color: #146406'>" + entry + "</span>",
+						TrackingID: formID
+						}),
+		 
+					headers: {
+		 
+						"Accept": "application/json;odata=verbose",
+		 
+						"X-RequestDigest": $("#__REQUESTDIGEST").val()
+		 
+					},
+		 
+					success: function () {
+		 
+					},
+		 
+					error: function () {
+					
+						shift(note,note.error);
+					}
+		 
+				});
+			}
+		}
+	}
+
+	
+	function updatePromote()
+	{
+		
+				
+		shift(promote,promote.red);
+	
+		if ($('#extendDatePicker').val() != "" && $('#authorizationAmount').val() != "")
+		{
+			shift(promote,promote.process);
+			
+			GetCurrentGeneralItem();
+			
+		}
+		
+		function GetCurrentGeneralItem(){		
+			JSRequest.EnsureSetup();
+			var formID = JSRequest.QueryString["ID"];
+			
+			$.ajax({
+				url: _spPageContextInfo.webServerRelativeUrl + "/_api/web/lists/getbytitle('HIRS General Entry')/items(" + formID + ")",
+				method: "GET",
+				headers: { "Accept": "application/json; odata=verbose" },
+				success: function (data) {
+						createMasterObject(data.d);
+				},
+				error: function (data) {
+				}
+			});
+		}
+		
+		
+		
+		function createMasterObject(listObjectData)
+		{
+			var dataObj = {		
+				__metadata:{ 'type': 'SP.Data.HIRS_x0020_MasterListItem'}, 
+				Extended_x0020_Thru: $("#extendDatePicker").val() == "" ? "-1": new Date($("#extendDatePicker").val()).toString('yyyy/MM/dd'),
+				Authorization_x0020_Amount: $("#authorizationAmount").val() == "" ? "-1": $("#authorizationAmount").val(),
+				Status: 'OPEN',
+	
+				//Master : General
+				Adjustor_x0020_Name: listObjectData.Adjustor_x0020_Name,
+				Body_x0020_Shop: $($(".ms-formbody").find("a")[4]).html(),
+				Claim_x0020_Number: listObjectData.Claim_x0020_Number,
+				Confirmation_x0020_Number: listObjectData.Confirmation_x0020_Number == null ? "" : listObjectData.Confirmation_x0020_Number,							
+				Date_x0020_IN: listObjectData.Date_x0020_In_x0020_Rental,
+				Insurance_x0020_CompanyId: listObjectData.Insurance_x0020_Company_x003a_Id.toString(),							
+				Location_x0020_NumberId: listObjectData.Location_x0020_NumberId.toString(),
+				Policy_x0020_Deductible: listObjectData.Policy_x0020_Deductible,
+				Policy_x0020_Expiration: listObjectData.Policy_x0020_Expiration,
+				Policy_x0020_Number: listObjectData.Policy_x0020_Number,
+				RA_x0020_Number: listObjectData.RA_x0020_Number,							
+				Closed_x0020_Date: listObjectData.Return_x0020_Date,
+				Title: listObjectData.Title
+			};
+			
+			$.ajax({
+				url: _spPageContextInfo.webServerRelativeUrl + "/_api/web/lists/getbytitle('HIRS Master')/items",
+	 
+				type: "POST",
+	 
+				contentType: "application/json;odata=verbose",
+	 
+				data: JSON.stringify(
+					dataObj
+					),
+	 
+				headers: {
+	 
+					"Accept": "application/json;odata=verbose",
+	 
+					"X-RequestDigest": $("#__REQUESTDIGEST").val()
+	 
+				},
+	 
+				success: function () {
+					updateStatus();												 
+				},
+	 
+				error: function () {
+					shift(promote,promote.error);
+	 
+				}
+	 
+			});
+		}
+		
+		function updateStatus()
+		{		
+			JSRequest.EnsureSetup();
+			var formID = JSRequest.QueryString["ID"];
+			
+			$.ajax({
+				url: _spPageContextInfo.webServerRelativeUrl + "/_api/web/lists/getbytitle('HIRS General Entry')/items(" + formID + ")",
+	 
+				type: "POST",
+	 
+				contentType: "application/json;odata=verbose",
+	 
+				data: JSON.stringify({
+					__metadata: { 'type': "SP.Data.HIRS_x0020_General_x0020_EntryListItem"},
+					Status: 'Promoted'
+					}),
+	 
+				headers: {
+	 
+					"Accept": "application/json;odata=verbose",
+	 
+					"X-RequestDigest": $("#__REQUESTDIGEST").val(),
+	 
+					"X-HTTP-Method": "MERGE",
+	 
+					"If-Match": "*"
+	 
+				},
+	 
+				success: function () {
+					shift(promote,promote.complete);	 
+				},
+	 
+				error: function () {
+					shift(promote,promote.error);
+	 
+				}
+	 
+			});
+		}
+	}
+
+</script>
